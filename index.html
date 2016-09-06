@@ -44,7 +44,7 @@ the resolution of the undefined symbols until they are needed.
 > dyn.load("T.so")   # Fails, missing symbol Rso
 
 <code class=Rcomment># lazy loading</code>
->  dyn.load("T.so",,FALSE) # Success, but don't call foo().
+>  dyn.load("T.so", , now = FALSE) # Success, but don't call foo().
 > .C(<a href="bar.c">"selfReliant"</a>)
 <code class=Routput>
 In selfReliant() (bar.c in T.so)
@@ -66,7 +66,7 @@ Restart R.
 
 Now, start R again.
 <pre class=Rinput>
-> dyn.load("Central.so",FALSE) <code class=Rcomment># load globally</code>
+> dyn.load("Central.so", local = FALSE) <code class=Rcomment># load globally</code>
 > dyn.load("T.so")         <code class=Rcomment># success.</code>
 </pre>
 
