@@ -1,0 +1,104 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html> <head>
+<title>dyn.load in R</title>
+<link rel=stylesheet href="R.css" >
+</head>
+
+<body>
+<h1></h1>
+
+There are currently two auxillary arguments to the <a
+href="http://stat.ethz.ch/R-alpha/library/base/html/dynload.html"><code
+class=Rfunction>dyn.load()</code></a> function which controls how
+dynamically loadable libaries are integrated into an R process.  These
+are `<code class=arg>local</code>' and `<code class=arg>now</code>'.
+
+These control whether
+<ul>
+  <li>   the symbols are made available to other DLLs loaded into the
+   application
+  <li>
+       undefined symbols in the DLL are resolved when it is loaded
+   or as the code is executed.
+</ul>
+The default values for these are
+<code class=Rliteral>TRUE</code> and
+<code class=Rliteral>TRUE</code> indicating that the symbols are loaded
+locally and resolved on immediately the DLL is loaded.
+
+<p>
+
+To test these flags, we have 2 libraries: Central.so, T.so.
+<p>
+
+T.so has a routine,
+<a href="bar.c"><code class=routine>foo()</code></a> that requires a
+symbol <a href="central.c"><code class=routine>Rso()</code></a> available in Central.so
+
+<p>
+We first examine the effect of lazy loading, deferring
+the resolution of the undefined symbols until they are needed.
+
+<pre class=Rinput>
+<code class=Rcomment># Missing symbol R.so.</code>
+> dyn.load("T.so")   # Fails, missing symbol Rso
+
+<code class=Rcomment># lazy loading</code>
+>  dyn.load("T.so",,FALSE) # Success, but don't call foo().
+> .C(<a href="bar.c">"selfReliant"</a>)
+<code class=Routput>
+In selfReliant() (bar.c in T.so)
+list()
+</code>
+</pre>
+
+Now, let's look at the sharing of symbols between libraries. We saw
+that if we attempt to load the library <code class=lib>T.so</code>
+using the default argument values, we are missing the symbol <code
+class=routine>Rso()</code>.  This is available in <code
+class=lib>Central.so</code>.
+Restart R.
+
+<pre class=Rinput>
+> dyn.load("Central.so")  <code class=Rcomment># default arguments so loads locally</code>
+> dyn.load("T.so")        <code class=Rcomment># Fails since Rso is not globally accessible.</code>
+</pre>
+
+Now, start R again.
+<pre class=Rinput>
+> dyn.load("Central.so",FALSE) <code class=Rcomment># load globally</code>
+> dyn.load("T.so")         <code class=Rcomment># success.</code>
+</pre>
+
+Note that the symbols in <code class=lib>T.so</code> do not have to be
+loaded globally, just to the donor <code class=lib>Central.so</code>
+DLL.  Now we can call <code class=routine>foo()</code> in <code
+class=lib> T.so</code> and all the symbols will be resolved correctly.
+
+<pre class=Rinput>
+> .C("foo")
+<code class=Routput>
+Second External foo()
+In Rso.
+list()
+</code>
+</pre>
+
+<hr width=50%>
+
+The code for these simple examples is available as a GNU-zipped tar
+file <a href="R-dynload.tar.gz">R-dynload.tar.gz</a>.  Feel free to
+whatever you want with it.
+<pre>
+  tar zxvf R-dynload.tar.gz
+</pre>
+will extract its contents.
+
+
+<hr>
+<address><a href=" http://cm.bell-labs.com/stat/duncan">Duncan Temple Lang</a>
+<a href=mailto:duncan@research.bell-labs.com>&lt;duncan@research.bell-labs.com&gt;</a></address>
+<!-- hhmts start -->
+Last modified: Sun Aug 29 11:02:14 EDT 1999
+<!-- hhmts end -->
+</body> </html>
